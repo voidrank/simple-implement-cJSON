@@ -21,7 +21,7 @@ typedef struct JSON {
     JSON *array;                /* The item's a array */
     char *key;                  /* The item's a entry */
     JSON *value;                /* The item's a entry */
-    JSON *next                  /* The item's a element||master of array||object */
+    JSON *next;                  /* The item's a element||master of array||object */
 } JSON;
 
 /* Parse & Print */
