@@ -18,10 +18,12 @@ typedef struct JSON {
 	char *valuestring;			/* The item's string, if type==JSON_STRING */
 	int valueint;				/* The item's number, if type==JSON_TRUE||JSON_FALSE */
 	double valuedouble;			/* The item's number, if type==JSON_NUMBER  */
-    JSON *array;                /* The item's a array */
-    char *key;                  /* The item's a entry */
-    JSON *value;                /* The item's a entry */
-    JSON *next;                  /* The item's a element||master of array||object */
+    struct JSON *array;         /* The item's array */
+    char *key;                  /* The item's entry */
+    struct JSON *value;         /* The item's entry */
+    struct JSON *next;          /* The item's next element of arrayitem||entryitem */
+    struct JSON *last;          /* The item's last element of arrayitem||entryitem */
+    struct JSON *son;           /* The item's son element of array||object */
 } JSON;
 
 /* Parse & Print */
@@ -51,9 +53,9 @@ extern void ReplaceItemInObject(JSON *object, const char *key, JSON *new_value);
 
 /* Remove/Delete */
 extern JSON *DetachItemFromArray(JSON *array, int which);
-extern void *DeleteItemFromArray(JSON *array, int which);
+extern void DeleteItemFromArray(JSON *array, int which);
 extern JSON *DetachItemFromObject(JSON *object, const char *key);
-extern void *DeleteItemFromObject(JSON *object, const char *key);
+extern void DeleteItemFromObject(JSON *object, const char *key);
 
 extern void DeleteJSON(JSON *item);
 
@@ -65,5 +67,7 @@ extern JSON *GetItemInArray(JSON *array, int which);
 extern JSON *GetItemInObject(JSON *object, const char *key);
 extern JSON *GetItemInJSON(JSON *json, const char *path);
 
+/* free */
+extern void DestroyObject(JSON *obj);
 
 #endif
