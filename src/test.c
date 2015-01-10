@@ -50,9 +50,21 @@ void testString(){
 }
 
 void testArray(){
+    JSON *obj = CreateArray();
+    if (obj->type != JSON_ARRAY)
+        puts("array wrong type");
 }
 
 void testObject(){
+    JSON *obj = CreateObject();
+    if (obj->type != JSON_OBJECT)
+        puts("object wrong type");
+}
+
+void testParse(){
+    JSON *obj = ParseJSONFromFile("test_array.json");
+    PrintJSON(obj);
+    PrintJSON(ParseJSONFromFile("test_object.json"));
 }
 
 int main(){
@@ -63,6 +75,7 @@ int main(){
     testString();
     testArray();
     testObject();
+    testParse();
 
     return 0;
 }

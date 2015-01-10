@@ -85,20 +85,29 @@ void AddItemToArray(JSON *array, JSON *item){
 //it indicate us never to care above
 //repetitive entry
 //what a stupid name
-void AddItemToObject(JSON *object, const char *key, JSON *value){
+void AddEntryToObject(JSON *object, JSON *item){
     JSON *it = object->son;
-    JSON *item = CreateEntry(key, value);
     if (it != NULL){
         item->next = it;
         it->last = item;
         object->son = item;
     }
+    else{
+        object->son = item;
+    }
+}
+
+void AddItemToObject(JSON *object, const char *key, JSON *value){
+    JSON *it = object->son;
+    JSON *entry = CreateEntry(key, value);
+    AddEntryToObject(object, entry);
 }
 
 
 void ReplaceItemInArray(JSON *array, int which, JSON *new_item){
     JSON *it = array->son;
-    assert(it!=NULL);
+    if (it==NULL)
+        return; // fail
     int count = 0;
     for ( ; it != NULL&& count < which; it = it->next, ++count);
     assert(count == which);
@@ -113,9 +122,11 @@ void ReplaceItemInArray(JSON *array, int which, JSON *new_item){
 
 void ReplaceItemInObject(JSON *object, const char *key, JSON *new_value){
     JSON *it = object->son;
-    assert(it!=NULL);
+    if (it==NULL)
+        return; //fail
     for ( ; it != NULL&& strcmp(it->valuestring, key) != 0; it = it->next);
-    assert(it != NULL);
+    if (it==NULL)
+        return; //fail
     DestroyObject(it->value);
     it->value = new_value;
 }
@@ -216,3 +227,46 @@ JSON *Duplicate(JSON *obj, int recurse){
             return NULL;
     }
 }
+
+JSON *GetItemInArray(JSON *object, int which){
+    JSON *it = object->son;
+    int count = 0;
+    for ( ; it!=NULL&& count<which; ++count, it = it->next);
+    return it;
+}
+
+JSON *GetItemInObject(JSON *object, const char *key){
+    JSON *it = object->son;
+    for (; it!=NULL&& strcmp(it->valuestring,key)!=0 ; it = it->next);
+    return it;
+}
+
+JSON *__GetItemInJSON(JSON *object, char *key){
+    if (object==NULL) return NULL; // fail
+    if (key != NULL) return object;
+    else if (object->type == JSON_ARRAY){
+        int which = 0;
+        char *pos = key+1;
+        while (*pos != 0&& *pos != '/'){
+            which = which*10 + *pos-'0';
+            ++pos;
+        }
+        return __GetItemInJSON(GetItemInArray(object, which), pos);
+    }
+    else if (object->type == JSON_ARRAY){
+        char *op = key+1, *ed = op;
+        for( ; *ed != 0&& *ed != '/'; ++ed);
+        char *query_string = (char*)calloc(ed-op+1, sizeof(char));
+        return __GetItemInJSON(GetItemInObject(object, query_string), ed);
+    }
+    else
+        return NULL;
+}
+
+JSON *GetItemInJSON(JSON *object, const char *key){
+    int length = strlen(key);
+    char *buffer = (char*)calloc(length+1, sizeof(char));
+    memcpy(buffer, key, length*sizeof(char));
+    return __GetItemInJSON(object, buffer);
+}
+

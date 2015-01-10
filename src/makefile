@@ -1,3 +1,3 @@
-main: test.c JSON.c JSON.h
-	clang test.c JSON.c -g -o main
+main: test.c JSON.c JSON.h parse.c print.c
+	clang test.c JSON.c parse.c print.c -g -o main
 

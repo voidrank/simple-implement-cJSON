@@ -27,6 +27,7 @@ typedef struct JSON {
 } JSON;
 
 /* Parse & Print */
+extern JSON *non_type_parse(void);
 extern JSON *ParseJSON(const char *value);
 extern JSON *ParseJSONFromFile(const char *file_name);
 
@@ -42,10 +43,12 @@ extern JSON *CreateNumber(double num);
 extern JSON *CreateString(const char *string);
 extern JSON *CreateArray(void);
 extern JSON *CreateObject(void);
+extern JSON *CreateEntry(const char *key, JSON *value);
 
 /* Append */
 extern void AddItemToArray(JSON *array, JSON *item);
 extern void AddItemToObject(JSON *object, const char *key, JSON *value);
+extern void AddEntryToObject(JSON *object, JSON *entry);
 
 /* Update */
 extern void ReplaceItemInArray(JSON *array, int which, JSON *new_item);
@@ -69,5 +72,6 @@ extern JSON *GetItemInJSON(JSON *json, const char *path);
 
 /* free */
 extern void DestroyObject(JSON *obj);
+
 
 #endif
