@@ -1,81 +1,60 @@
-#include <stdlib.h>
-#include <math.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "JSON.h"
 
-#define eps 1e-8
-
-void testNull(){
-    JSON *obj = CreateNULL();
-    if (obj->type != JSON_NULL)
-        puts("null wrong type");
-    DestroyObject(obj);
+int TestSomeFuncs() {
+	
+	int score = 10;
+	
+	// 调用同学们实现的接口
+	JSON *root = CreateObject();
+	// 评测1 是否能正确创建Object
+	if (root->type != JSON_OBJECT) { // 类型不对
+		score -= 2;
+	}
+	
+	AddItemToObject(root, "name", CreateString("Hello World"));
+	// 评测2 是否能正确AddItemToObject并且读取
+	JSON *value = GetItemInObject(root, "name");
+	// 类型不对或者值不对
+	if (value->type != JSON_STRING || strcmp(value->valuestring, "Hello World")) {
+		score -= 2;
+	}
+	
+	JSON *array = CreateArray();
+	AddItemToArray(array, CreateBool(0));
+	AddItemToArray(array, CreateNumber(2.3));
+	// 评测3 是否能正确AddItemToArray并且读取
+	JSON *item = GetItemInArray(array, 1);
+	if (item->type != JSON_NUMBER || item->valuedouble != 2.3) {
+		score -= 2;
+	}
+	
+	AddItemToObject(root, "array", array);
+	// 现在root的状态
+	/*
+	{
+		"name": "Hello Wrold",
+		"array": [
+			false,
+			2.3
+		]
+	}
+	*/
+	
+	// 评测4 是否能正确地根据路径读取值
+	item = GetItemInJSON(root, "/array/0");
+	if (item->type != JSON_FALSE) {
+		score -= 2;
+	}
+	
+	PrintJSONToFile(root, "test.json");
+	// 评测5 是否与标准答案文件相同
+	return score;
 }
 
-void testFalse(){
-    JSON *obj = CreateFalse();
-    if (obj->type != JSON_FALSE)
-        puts("false wrong type");
-    if (obj->valueint != 0)
-        puts("false wrong value");
-    DestroyObject(obj);
-}
-
-void testTrue(){
-    JSON *obj = CreateTrue();
-    if (obj->type != JSON_TRUE)
-        puts("true wrong type");
-    if (obj->valueint != 1)
-        puts("true wrong value");
-    DestroyObject(obj);
-}
-
-void testNumber(){
-    JSON *obj = CreateNumber(123.123);
-    if (obj->type != JSON_NUMBER)
-        puts("number wrong type");
-    if (abs(obj->valuedouble - 123.123)>eps)
-        puts("number wrong value");
-    DestroyObject(obj);
-}
-
-void testString(){
-    JSON *obj = CreateString("123");
-    if (obj->type != JSON_STRING)
-        puts("string wrong type");
-    if (strcmp(obj->valuestring, "123") != 0)
-        puts("string wrong value");
-    DestroyObject(obj);
-}
-
-void testArray(){
-    JSON *obj = CreateArray();
-    if (obj->type != JSON_ARRAY)
-        puts("array wrong type");
-}
-
-void testObject(){
-    JSON *obj = CreateObject();
-    if (obj->type != JSON_OBJECT)
-        puts("object wrong type");
-}
-
-void testParse(){
-    JSON *obj = ParseJSONFromFile("test_array.json");
-    PrintJSON(obj);
-    PrintJSON(ParseJSONFromFile("test_object.json"));
-}
-
-int main(){
-    testNull();
-    testFalse();
-    testTrue();
-    testNumber();
-    testString();
-    testArray();
-    testObject();
-    testParse();
-
-    return 0;
+int main() {
+	printf("Score: %d\n", TestSomeFuncs());
+	return 0;
 }

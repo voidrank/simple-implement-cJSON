@@ -56,3 +56,11 @@ void PrintJSON(JSON *object){
     __PrintJSON(object);
     puts("");
 }
+
+void PrintJSONToFile(JSON *item, const char *file_name){
+    int backup_stdout = dup(fileno(stdout));
+    freopen(file_name, "w", stdout);
+    PrintJSON(item);
+    fclose(stdout);
+    fdopen(backup_stdout, "w");
+}

@@ -5,6 +5,34 @@
 #include <string.h>
 
 void DestroyObject(JSON *obj){
+    if (obj == NULL) return;
+    switch (obj->type){
+        case JSON_STRING:{
+            free(obj->valuestring);
+            break;
+        }
+        case JSON_ARRAY:{
+            JSON *item = obj->son, *nxt_item;
+            for ( ; item != NULL; item = nxt_item){
+                nxt_item = item->next;
+                DestroyObject(item);
+            }
+            break;
+        }
+        case JSON_OBJECT:{
+            JSON *item = obj->son, *nxt_item;
+            for ( ; item != NULL; item = nxt_item){
+                nxt_item = item->next;
+                DestroyObject(item);
+            }
+            break;
+        }
+        case JSON_ENTRY:{
+            free(obj->key);
+            DestroyObject(obj->value);
+            break;
+        }
+    }
     free(obj);
 }
 
@@ -26,6 +54,10 @@ JSON *CreateTrue(void){
     obj->type = JSON_TRUE;
     obj->valueint = 1;
     return obj;
+}
+
+JSON *CreateBool(int b){
+    return b?CreateTrue():CreateFalse();
 }
 
 JSON *CreateNumber(double ival){
@@ -124,7 +156,7 @@ void ReplaceItemInObject(JSON *object, const char *key, JSON *new_value){
     JSON *it = object->son;
     if (it==NULL)
         return; //fail
-    for ( ; it != NULL&& strcmp(it->valuestring, key) != 0; it = it->next);
+    for ( ; it != NULL&& strcmp(it->key, key) != 0; it = it->next);
     if (it==NULL)
         return; //fail
     DestroyObject(it->value);
@@ -132,7 +164,7 @@ void ReplaceItemInObject(JSON *object, const char *key, JSON *new_value){
 }
 
 JSON *DetachItemFromArray(JSON *array, int which){
-    JSON *it = array->next;
+    JSON *it = array->son;
     int count = 0;
     for ( ; it != NULL&& count < which; it = it->next, ++count);
     assert(count == which);
@@ -140,6 +172,8 @@ JSON *DetachItemFromArray(JSON *array, int which){
         it->last->next = it->next;
     if (it->next != NULL)
         it->next->last = it->last;
+    if (it == array->son)
+        array->son = it->next;
     it->next = NULL;
     it->last = NULL;
     return it;
@@ -151,14 +185,16 @@ void DeleteItemFromArray(JSON *array, int which){
 }
 
 JSON *DetachItemFromObject(JSON *object, const char *key){
-    JSON *it = object->next;
+    JSON *it = object->son;
     assert(it!=NULL);
-    for ( ; it != NULL&& strcmp(it->valuestring, key) == 0; it = it->next);
+    for ( ; it != NULL&& strcmp(it->key, key) != 0; it = it->next);
     assert(it != NULL);
     if (it->last!=NULL)
-        it->last->next = it;
+        it->last->next = it->next;
     if (it->next!=NULL)
-        it->next->last = it;
+        it->next->last = it->last;
+    if (it == object->son)
+        object->son = it->next;
     it->next = NULL;
     it->last = NULL;
     JSON *ret = it->value;
@@ -237,13 +273,14 @@ JSON *GetItemInArray(JSON *object, int which){
 
 JSON *GetItemInObject(JSON *object, const char *key){
     JSON *it = object->son;
-    for (; it!=NULL&& strcmp(it->valuestring,key)!=0 ; it = it->next);
-    return it;
+    for (; it!=NULL&& strcmp(it->key,key)!=0 ; it = it->next);
+    assert(it!=NULL);
+    return it->value;
 }
 
 JSON *__GetItemInJSON(JSON *object, char *key){
     if (object==NULL) return NULL; // fail
-    if (key != NULL) return object;
+    if (key == NULL|| *key == 0) return object;
     else if (object->type == JSON_ARRAY){
         int which = 0;
         char *pos = key+1;
@@ -253,10 +290,11 @@ JSON *__GetItemInJSON(JSON *object, char *key){
         }
         return __GetItemInJSON(GetItemInArray(object, which), pos);
     }
-    else if (object->type == JSON_ARRAY){
+    else if (object->type == JSON_OBJECT){
         char *op = key+1, *ed = op;
         for( ; *ed != 0&& *ed != '/'; ++ed);
         char *query_string = (char*)calloc(ed-op+1, sizeof(char));
+        memcpy(query_string, op, sizeof(char)*(ed-op));
         return __GetItemInJSON(GetItemInObject(object, query_string), ed);
     }
     else
